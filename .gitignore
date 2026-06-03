@@ -33,3 +33,4 @@ backend/target/
 
 # Firebase cache
 frontend/.firebase/
+.vscode/
