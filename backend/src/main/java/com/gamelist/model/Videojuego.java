@@ -30,6 +30,7 @@ public class Videojuego {
     @Column(length = 2000)
     private String descripcion;
 
+    @Column(columnDefinition = "TEXT")
     private String imagenUrl;
 
     @NotNull(message = "El estado es obligatorio")

@@ -55,6 +55,7 @@ public class ApiMetricsFilter extends OncePerRequestFilter {
                     .tag("method", method)
                     .tag("path", path)
                     .tag("status", status)
+                    .publishPercentileHistogram()
                     .register(meterRegistry)
                     .record(duration, TimeUnit.NANOSECONDS);
         }

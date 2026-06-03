@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS videojuego (
     titulo       VARCHAR(255) NOT NULL,
     anio         INTEGER,
     descripcion  TEXT,
-    imagen_url   VARCHAR(500),
+    imagen_url   TEXT,
     estado       VARCHAR(20) NOT NULL CHECK (estado IN ('PENDIENTE','JUGANDO','TERMINADO','FAVORITO')),
     categoria_id INTEGER REFERENCES categoria(id),
     plataforma_id INTEGER REFERENCES plataforma(id)
