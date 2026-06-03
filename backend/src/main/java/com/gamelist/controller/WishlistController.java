@@ -25,7 +25,7 @@ public class WishlistController {
     public List<Wishlist> listar(
             @RequestParam(required = false) String titulo,
             @RequestParam(required = false) PrioridadWishlist prioridad) {
-        return repo.buscarConFiltros(titulo, prioridad);
+        return repo.buscarConFiltros(normalizarTituloFiltro(titulo), prioridad);
     }
 
     @GetMapping("/{id}")
@@ -62,5 +62,9 @@ public class WishlistController {
         }
         repo.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private String normalizarTituloFiltro(String titulo) {
+        return titulo == null ? "" : titulo.trim();
     }
 }

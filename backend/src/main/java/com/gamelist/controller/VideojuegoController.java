@@ -139,7 +139,11 @@ public class VideojuegoController {
             Long categoriaId,
             Long plataformaId) {
 
-        return repo.buscarConFiltros(titulo, estado, categoriaId, plataformaId);
+        return repo.buscarConFiltros(normalizarTituloFiltro(titulo), estado, categoriaId, plataformaId);
+    }
+
+    private String normalizarTituloFiltro(String titulo) {
+        return titulo == null ? "" : titulo.trim();
     }
 
     private String csvValue(Object value) {

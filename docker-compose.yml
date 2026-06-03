@@ -27,6 +27,10 @@ services:
     environment:
       PORT: 8080
       API_KEY: dev-gamevault-key
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin123
+      AUTH_TOKEN_SECRET: dev-gamevault-secret
+      AUTH_TOKEN_TTL_MINUTES: 480
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/gamelist
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres

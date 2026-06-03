@@ -14,6 +14,15 @@ CREATE TABLE IF NOT EXISTS plataforma (
     fabricante  VARCHAR(100)
 );
 
+CREATE TABLE IF NOT EXISTS usuario_app (
+    id            SERIAL PRIMARY KEY,
+    username      VARCHAR(30) NOT NULL UNIQUE,
+    display_name  VARCHAR(80),
+    password_hash VARCHAR(260) NOT NULL,
+    role          VARCHAR(20) NOT NULL CHECK (role IN ('ADMIN','USER')),
+    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS videojuego (
     id           SERIAL PRIMARY KEY,
     titulo       VARCHAR(255) NOT NULL,

@@ -7,9 +7,136 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
-<body>
+<body class="auth-locked">
+
+<section class="auth-screen" id="login-screen" aria-label="Acceso a GameVault">
+
+  <!-- Panel de marca (lateral) -->
+  <aside class="auth-aside" aria-hidden="true">
+    <div class="auth-aside-inner">
+      <div class="auth-brand">
+        <svg class="auth-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="13" rx="5"/>
+          <path d="M8 12h2m-1-1v2M15 13h.01M17 13h.01"/>
+        </svg>
+        <span>GameVault</span>
+      </div>
+      <h2 class="auth-aside-title">Tu biblioteca de videojuegos, en un solo lugar.</h2>
+      <p class="auth-aside-sub">Guarda, califica y sigue el progreso de todo lo que juegas. Crea tu cuenta y empieza tu colección.</p>
+      <ul class="auth-features">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Biblioteca y wishlist sin límites
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Reseñas y puntuaciones por juego
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Estadísticas de tu progreso
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Panel del formulario -->
+  <div class="auth-main">
+    <form class="auth-card" id="login-form" novalidate>
+
+      <!-- Marca compacta (solo visible cuando se oculta el panel lateral) -->
+      <div class="auth-mobile-brand" aria-hidden="true">
+        <svg class="auth-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="13" rx="5"/>
+          <path d="M8 12h2m-1-1v2M15 13h.01M17 13h.01"/>
+        </svg>
+        <span>GameVault</span>
+      </div>
+
+      <div class="auth-card-head">
+        <h2 id="login-title">Bienvenido de nuevo</h2>
+        <p class="auth-sub" id="auth-subtitle">Inicia sesión para acceder a tu biblioteca.</p>
+      </div>
+
+      <div class="auth-tabs" role="tablist" aria-label="Modo de acceso">
+        <button type="button" class="auth-tab active" id="tab-login" role="tab" aria-selected="true">Iniciar sesión</button>
+        <button type="button" class="auth-tab" id="tab-register" role="tab" aria-selected="false">Crear cuenta</button>
+      </div>
+
+      <div class="auth-fields">
+        <!-- Nombre (solo registro) -->
+        <div class="auth-field" id="login-register-fields" style="display:none">
+          <label for="login-display-name">Nombre</label>
+          <div class="auth-input-wrap">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="login-display-name" autocomplete="name" placeholder="¿Cómo quieres que te llamemos?" maxlength="60" />
+          </div>
+          <span class="auth-field-error" id="error-display-name"></span>
+        </div>
+
+        <!-- Usuario -->
+        <div class="auth-field">
+          <label for="login-username">Nombre de usuario</label>
+          <div class="auth-input-wrap">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
+            <input type="text" id="login-username" autocomplete="username" placeholder="tu_usuario" maxlength="30" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus />
+          </div>
+          <span class="auth-field-error" id="error-username"></span>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="auth-field">
+          <label for="login-password">Contraseña</label>
+          <div class="auth-input-wrap">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="login-password" class="has-eye" autocomplete="current-password" placeholder="••••••••" maxlength="80" />
+            <button type="button" class="auth-eye" id="toggle-password" aria-label="Mostrar contraseña">
+              <svg class="auth-eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="auth-eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M10.7 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-2.6 3.6M6.1 6.1A18 18 0 0 0 2 12s3.5 7 10 7a10.6 10.6 0 0 0 4-.8"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m2 2 20 20"/></svg>
+            </button>
+          </div>
+          <span class="auth-caps" id="auth-caps" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 8 6-6 6 6"/><path d="M6 13h12"/><path d="M9 17h6v4H9z"/></svg>
+            Bloq Mayús está activado
+          </span>
+          <span class="auth-field-error" id="error-password"></span>
+
+          <!-- Medidor de fuerza (solo registro) -->
+          <div class="auth-strength" id="auth-strength" style="display:none">
+            <div class="auth-strength-bars" id="auth-strength-bars">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <span class="auth-strength-label" id="auth-strength-label">Mínimo 6 caracteres</span>
+          </div>
+        </div>
+
+        <!-- Confirmar contraseña (solo registro) -->
+        <div class="auth-field" id="confirm-field" style="display:none">
+          <label for="login-password-confirm">Confirmar contraseña</label>
+          <div class="auth-input-wrap">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="login-password-confirm" autocomplete="new-password" placeholder="••••••••" maxlength="80" />
+          </div>
+          <span class="auth-field-error" id="error-confirm"></span>
+        </div>
+      </div>
+
+      <button type="submit" class="auth-submit login-submit" id="auth-submit">
+        <span class="auth-submit-label">Iniciar sesión</span>
+        <span class="auth-spinner" aria-hidden="true"></span>
+      </button>
+
+      <p class="auth-error login-error" id="login-error" aria-live="polite"></p>
+
+      <p class="auth-switch">
+        <span id="auth-switch-text">¿No tienes cuenta todavía?</span>
+        <button type="button" class="auth-switch-link login-toggle" id="login-toggle">Créala gratis</button>
+      </p>
+    </form>
+  </div>
+</section>
 
 <div class="container">
 
@@ -23,6 +150,10 @@
         <h1>GameVault</h1>
         <p>Tu biblioteca personal Brandon</p>
       </div>
+    </div>
+    <div class="admin-session" id="admin-session" style="display:none">
+      <span id="admin-user-label">Admin</span>
+      <button class="btn-outline" id="btn-logout" type="button">Cerrar sesión</button>
     </div>
   </header>
 
@@ -364,6 +495,6 @@
   </div>
 </div>
 
-<script src="app.js" charset="UTF-8"></script>
+<script src="app.js?v=5" charset="UTF-8"></script>
 </body>
 </html>

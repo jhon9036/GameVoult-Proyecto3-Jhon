@@ -150,7 +150,7 @@ El Proyecto 3 agrega cuatro componentes al sistema existente:
 |------------|----------------|
 | Monitoreo | Prometheus + Grafana con Docker Compose |
 | Metricas | Endpoint `/metrics`, contador de requests, latencia y gauge |
-| Autenticacion | API Key por cabecera `X-API-Key` en operaciones de escritura |
+| Autenticacion | Registro/login de usuarios + API Key de respaldo para scripts |
 | Seguridad | Documento [`docs/security.md`](docs/security.md) |
 | Nueva funcionalidad | Exportacion de videojuegos a CSV |
 
@@ -190,15 +190,22 @@ Con el stack corriendo, ejecutar en PowerShell:
 
 El script consulta endpoints publicos y realiza algunas operaciones temporales en wishlist usando la API Key local.
 
-### Autenticacion por API Key
+### Login y registro de usuarios
 
-La clave local de demostracion es:
+Al abrir la aplicacion se muestra una pantalla de inicio de sesion. Desde esa misma pantalla se puede usar **Crear cuenta** para registrar usuarios nuevos. El sistema crea automaticamente un administrador local para sustentacion:
 
 ```text
-dev-gamevault-key
+Usuario: admin
+Contrasena: admin123
 ```
 
-Los endpoints de lectura son publicos. Los endpoints de creacion, actualizacion y eliminacion requieren:
+Los usuarios registrados quedan con rol `USER` y el usuario inicial queda con rol `ADMIN`. Las contrasenas se guardan con hash PBKDF2 y el frontend guarda un token firmado temporal para enviarlo en operaciones de escritura con:
+
+```text
+Authorization: Bearer <token>
+```
+
+La API Key se conserva como mecanismo de respaldo para scripts y pruebas tecnicas. Los endpoints de lectura son publicos. Los endpoints de creacion, actualizacion y eliminacion aceptan token de usuario autenticado o:
 
 ```text
 X-API-Key: dev-gamevault-key
