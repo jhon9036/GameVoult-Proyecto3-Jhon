@@ -142,6 +142,97 @@ Calculado como diferencia entre `createdAt` y `closedAt` de cada issue en GitHub
 
 ---
 
+## Proyecto 3 - Seguridad, monitoreo y nueva funcionalidad
+
+El Proyecto 3 agrega cuatro componentes al sistema existente:
+
+| Componente | Implementacion |
+|------------|----------------|
+| Monitoreo | Prometheus + Grafana con Docker Compose |
+| Metricas | Endpoint `/metrics`, contador de requests, latencia y gauge |
+| Autenticacion | API Key por cabecera `X-API-Key` en operaciones de escritura |
+| Seguridad | Documento [`docs/security.md`](docs/security.md) |
+| Nueva funcionalidad | Exportacion de videojuegos a CSV |
+
+### Ejecucion del stack completo
+
+Desde la raiz del repositorio:
+
+```bash
+docker compose up --build
+```
+
+Servicios disponibles:
+
+| Servicio | URL |
+|----------|-----|
+| Aplicacion GameVault | http://localhost:8080 |
+| Metricas Prometheus de la API | http://localhost:8080/metrics |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
+
+Credenciales de Grafana:
+
+```text
+Usuario: admin
+Contrasena: admin
+```
+
+El dashboard se aprovisiona automaticamente en Grafana con el nombre **GameVault Observabilidad**.
+
+### Generar trafico de prueba
+
+Con el stack corriendo, ejecutar en PowerShell:
+
+```powershell
+.\scripts\generate-traffic.ps1
+```
+
+El script consulta endpoints publicos y realiza algunas operaciones temporales en wishlist usando la API Key local.
+
+### Autenticacion por API Key
+
+La clave local de demostracion es:
+
+```text
+dev-gamevault-key
+```
+
+Los endpoints de lectura son publicos. Los endpoints de creacion, actualizacion y eliminacion requieren:
+
+```text
+X-API-Key: dev-gamevault-key
+```
+
+Ejemplo de llamada protegida:
+
+```powershell
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:8080/api/wishlist" `
+  -Headers @{ "X-API-Key" = "dev-gamevault-key"; "Content-Type" = "application/json" } `
+  -Body '{"titulo":"Demo auth","prioridad":"MEDIA","notas":"Prueba protegida"}'
+```
+
+Para demostrar el bloqueo, se puede repetir la misma llamada sin `X-API-Key` y la API respondera `401`.
+
+Si se cambia `API_KEY` en Docker Compose o Cloud Run, el frontend puede usar la nueva clave guardandola en el navegador:
+
+```javascript
+localStorage.setItem("gamevaultApiKey", "nueva-clave")
+```
+
+### Exportacion CSV
+
+La biblioteca incluye un boton **Exportar CSV**. Tambien se puede llamar directamente:
+
+```text
+GET http://localhost:8080/api/videojuegos/export/csv
+```
+
+El endpoint acepta filtros opcionales como `titulo`, `estado`, `categoriaId` y `plataformaId`.
+
+---
+
 ## Instalación y Uso
 
 ### 1. Clonar el repositorio

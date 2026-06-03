@@ -330,7 +330,13 @@ body::before {
 /* ═══════════════════════════════════════════════════════════════
    FORM TOGGLE
 ═══════════════════════════════════════════════════════════════ */
-.form-toggle-bar { margin-bottom: 16px; }
+.form-toggle-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    FORMULARIO

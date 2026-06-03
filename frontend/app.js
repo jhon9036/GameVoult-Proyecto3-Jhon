@@ -4,6 +4,20 @@ const API_URL = (window.location.hostname === 'localhost' && window.location.por
   ? 'http://localhost:8080/api'
   : '/api';
 
+const DEFAULT_API_KEY = "dev-gamevault-key";
+
+function getApiKey() {
+  return localStorage.getItem("gamevaultApiKey") || DEFAULT_API_KEY;
+}
+
+function authHeaders() {
+  return { "X-API-Key": getApiKey() };
+}
+
+function jsonAuthHeaders() {
+  return { "Content-Type": "application/json", ...authHeaders() };
+}
+
 const ICON_CONTROLLER = '<svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="13" rx="5"/><path d="M8 12h2m-1-1v2M15 13h.01M17 13h.01"/></svg>';
 
 let videojuegos    = [];
@@ -77,6 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Formulario toggle
   document.getElementById("btn-abrir-formulario").addEventListener("click", abrirFormulario);
+  document.getElementById("btn-exportar-csv").addEventListener("click", exportarCsv);
   document.getElementById("reload-btn").addEventListener("click", cargarVideojuegos);
   document.getElementById("cancel-btn").addEventListener("click", () => {
     if (editandoId && !confirm("\u00BFDescartar los cambios de edici\u00F3n?")) return;
@@ -110,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("detalle-btn-eliminar").addEventListener("click", async () => {
     if (!confirm("\u00BFEliminar este juego?")) return;
-    await fetch(`${API_URL}/videojuegos/${detalleJuegoId}`, { method: "DELETE" });
+    await fetch(`${API_URL}/videojuegos/${detalleJuegoId}`, { method: "DELETE", headers: authHeaders() });
     mostrarBiblioteca();
     await cargarVideojuegos();
   });
@@ -223,6 +238,18 @@ async function cargarEstadisticas() {
     const el = document.getElementById(`num-${k}`);
     if (el) el.textContent = stats[k] ?? 0;
   });
+}
+
+function exportarCsv() {
+  const params = new URLSearchParams();
+  const titulo = searchInput.value.trim();
+
+  if (titulo) params.set("titulo", titulo);
+  if (filterEstado.value) params.set("estado", filterEstado.value);
+  if (filterCat.value) params.set("categoriaId", filterCat.value);
+
+  const query = params.toString();
+  window.location.href = `${API_URL}/videojuegos/export/csv${query ? `?${query}` : ""}`;
 }
 
 // ════════════════════════════════════════════════════════
@@ -396,7 +423,7 @@ async function guardarResena(e) {
 
   const res = await fetch(`${API_URL}/resenas`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -408,7 +435,7 @@ async function guardarResena(e) {
 
 async function eliminarResena(id) {
   if (!confirm("\u00BFEliminar esta rese\u00F1a?")) return;
-  await fetch(`${API_URL}/resenas/${id}`, { method: "DELETE" });
+  await fetch(`${API_URL}/resenas/${id}`, { method: "DELETE", headers: authHeaders() });
   await cargarResenas(detalleJuegoId);
 }
 
@@ -505,7 +532,7 @@ async function guardarVideojuego(e) {
 
   const res = await fetch(url, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -550,7 +577,7 @@ function editar(id) {
 
 async function eliminar(id) {
   if (!confirm("\u00BFEliminar este juego?")) return;
-  await fetch(`${API_URL}/videojuegos/${id}`, { method: "DELETE" });
+  await fetch(`${API_URL}/videojuegos/${id}`, { method: "DELETE", headers: authHeaders() });
   await cargarVideojuegos();
 }
 
@@ -660,7 +687,7 @@ async function guardarWishlistItem(e) {
 
   const res = await fetch(`${API_URL}/wishlist`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: jsonAuthHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -672,6 +699,6 @@ async function guardarWishlistItem(e) {
 
 async function eliminarWishlistItem(id) {
   if (!confirm("\u00BFQuitar este juego de la wishlist?")) return;
-  await fetch(`${API_URL}/wishlist/${id}`, { method: "DELETE" });
+  await fetch(`${API_URL}/wishlist/${id}`, { method: "DELETE", headers: authHeaders() });
   await cargarWishlist();
 }

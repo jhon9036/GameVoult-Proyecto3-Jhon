@@ -376,3 +376,76 @@ Para tener una experiencia visual atractiva y coherente en toda la aplicación
 ## Responsable: @Persona2
 ## Tipo: Feature
 ## Prioridad: Alta
+
+---
+
+# SPRINT 4 / PROYECTO 3 - Seguridad, monitoreo y nuevas funcionalidades
+
+---
+
+## HU-20 | Monitoreo con Prometheus y Grafana
+**Rama:** `codex/proyecto3-gamevoult`
+**Responsable:** @Jhon
+**Sprint:** 4 | **Estimación:** 5 puntos | **Tipo:** DevOps | **Prioridad:** Alta
+
+### Como equipo de desarrollo
+Quiero monitorear la API con Prometheus y Grafana
+Para observar throughput, latencia y estado general del sistema durante la sustentación
+
+### Criterios de Aceptación:
+- [ ] La API expone métricas en `/metrics`
+- [ ] Prometheus recolecta métricas del backend desde Docker Compose
+- [ ] Grafana tiene un dashboard con mínimo 3 paneles
+- [ ] Los paneles muestran throughput, latencia y una métrica adicional tipo gauge
+- [ ] Existe un script para generar tráfico de prueba
+
+---
+
+## HU-21 | Autenticación básica por API Key
+**Rama:** `codex/proyecto3-gamevoult`
+**Responsable:** @Jhon
+**Sprint:** 4 | **Estimación:** 3 puntos | **Tipo:** Seguridad | **Prioridad:** Alta
+
+### Como administrador de GameVault
+Quiero proteger las operaciones de escritura con una API Key
+Para evitar que usuarios no autorizados creen, modifiquen o eliminen información
+
+### Criterios de Aceptación:
+- [ ] `POST`, `PUT`, `PATCH` y `DELETE` bajo `/api/**` requieren `X-API-Key`
+- [ ] Los endpoints de lectura siguen siendo públicos
+- [ ] Una petición sin API Key válida retorna `401`
+- [ ] El frontend envía la API Key en operaciones de escritura
+
+---
+
+## HU-22 | Análisis de seguridad del sistema
+**Rama:** `codex/proyecto3-gamevoult`
+**Responsable:** @Jhon
+**Sprint:** 4 | **Estimación:** 3 puntos | **Tipo:** Documentación | **Prioridad:** Alta
+
+### Como equipo del proyecto
+Quiero documentar vulnerabilidades, mitigaciones y respuesta a incidentes
+Para demostrar comprensión de los riesgos de seguridad del sistema
+
+### Criterios de Aceptación:
+- [ ] Existe el archivo `docs/security.md`
+- [ ] Se listan al menos 3 vulnerabilidades del sistema
+- [ ] Se describen medidas implementadas y pendientes
+- [ ] Se incluye un plan corto de respuesta a incidentes
+
+---
+
+## HU-23 | Exportación de videojuegos a CSV
+**Rama:** `codex/proyecto3-gamevoult`
+**Responsable:** @Jhon
+**Sprint:** 4 | **Estimación:** 3 puntos | **Tipo:** Feature | **Prioridad:** Media
+
+### Como usuario de GameVault
+Quiero exportar mi biblioteca de videojuegos en formato CSV
+Para guardar un respaldo o analizar los datos fuera de la aplicación
+
+### Criterios de Aceptación:
+- [ ] Existe un endpoint `GET /api/videojuegos/export/csv`
+- [ ] El CSV contiene id, título, año, estado, categoría, plataforma y descripción
+- [ ] El endpoint permite reutilizar filtros de búsqueda
+- [ ] El frontend incluye un botón para descargar el CSV
