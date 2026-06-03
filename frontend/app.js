@@ -18,6 +18,56 @@ function jsonAuthHeaders() {
   return { "Content-Type": "application/json", ...authHeaders() };
 }
 
+// ── Notificaciones (toasts) ──
+// Reemplazan los fallos silenciosos: toda operación que termina (o falla)
+// avisa al usuario en pantalla en vez de no hacer nada.
+function notify(mensaje, tipo = "info") {
+  let cont = document.getElementById("toast-container");
+  if (!cont) {
+    cont = document.createElement("div");
+    cont.id = "toast-container";
+    document.body.appendChild(cont);
+  }
+  const toast = document.createElement("div");
+  toast.className = `toast toast--${tipo}`;
+  toast.setAttribute("role", "status");
+  toast.textContent = mensaje;
+  cont.appendChild(toast);
+
+  // Forzar reflow para que la transición de entrada se aplique.
+  requestAnimationFrame(() => toast.classList.add("toast--visible"));
+
+  setTimeout(() => {
+    toast.classList.remove("toast--visible");
+    toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+  }, 3500);
+}
+
+// ── Wrapper de fetch ──
+// Centraliza el manejo de errores: lanza una excepción con un mensaje legible
+// cuando la respuesta no es OK (incluyendo el 401 por API Key) o si falla la red.
+async function request(url, options = {}) {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (_networkError) {
+    throw new Error("No se pudo conectar con el servidor. Verifica tu conexión.");
+  }
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("No autorizado. Revisa tu API Key (cabecera X-API-Key).");
+    }
+    let mensaje = `Error ${res.status} al procesar la solicitud.`;
+    try {
+      const data = await res.json();
+      if (data && data.error) mensaje = data.error;
+    } catch (_) { /* la respuesta puede no traer cuerpo JSON */ }
+    throw new Error(mensaje);
+  }
+  return res;
+}
+
 const ICON_CONTROLLER = '<svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="13" rx="5"/><path d="M8 12h2m-1-1v2M15 13h.01M17 13h.01"/></svg>';
 
 let videojuegos    = [];
@@ -125,7 +175,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("detalle-btn-eliminar").addEventListener("click", async () => {
     if (!confirm("\u00BFEliminar este juego?")) return;
-    await fetch(`${API_URL}/videojuegos/${detalleJuegoId}`, { method: "DELETE", headers: authHeaders() });
+    try {
+      await request(`${API_URL}/videojuegos/${detalleJuegoId}`, { method: "DELETE", headers: authHeaders() });
+    } catch (e) {
+      notify(`No se pudo eliminar el juego: ${e.message}`, "error");
+      return;
+    }
+    notify("Juego eliminado.", "success");
     mostrarBiblioteca();
     await cargarVideojuegos();
   });
@@ -187,7 +243,13 @@ function cambiarVistaPrincipal(vista) {
 // ════════════════════════════════════════════════════════
 
 async function cargarCategorias() {
-  const res = await fetch(`${API_URL}/categorias`);
+  let res;
+  try {
+    res = await request(`${API_URL}/categorias`);
+  } catch (e) {
+    notify(`No se pudieron cargar las categorías: ${e.message}`, "error");
+    return;
+  }
   categorias = await res.json();
 
   const wlCatSelect = document.getElementById("wl-categoriaId");
@@ -203,7 +265,13 @@ async function cargarCategorias() {
 }
 
 async function cargarPlataformas() {
-  const res = await fetch(`${API_URL}/plataformas`);
+  let res;
+  try {
+    res = await request(`${API_URL}/plataformas`);
+  } catch (e) {
+    notify(`No se pudieron cargar las plataformas: ${e.message}`, "error");
+    return;
+  }
   plataformas = await res.json();
 
   const wlPlatSelect = document.getElementById("wl-plataformaId");
@@ -217,10 +285,12 @@ async function cargarPlataformas() {
 }
 
 async function cargarVideojuegos() {
-  const res = await fetch(`${API_URL}/videojuegos`);
-  if (!res.ok) {
+  let res;
+  try {
+    res = await request(`${API_URL}/videojuegos`);
+  } catch (e) {
     gamesList.innerHTML = `<p style="color:#f87171;padding:20px;text-align:center">
-      Error al cargar los videojuegos (${res.status}). Intenta recargar la página.</p>`;
+      ${e.message} Intenta recargar la página.</p>`;
     return;
   }
   videojuegos = await res.json();
@@ -229,8 +299,12 @@ async function cargarVideojuegos() {
 }
 
 async function cargarEstadisticas() {
-  const res = await fetch(`${API_URL}/videojuegos/estadisticas`);
-  if (!res.ok) return;
+  let res;
+  try {
+    res = await request(`${API_URL}/videojuegos/estadisticas`);
+  } catch (_) {
+    return; // las estadísticas son secundarias: si fallan, no interrumpimos la vista
+  }
   const stats = await res.json();
 
   const claves = ["TOTAL", "PENDIENTE", "JUGANDO", "TERMINADO", "FAVORITO"];
@@ -382,7 +456,13 @@ async function cargarResenas(videojuegoId) {
   const emptyRes = document.getElementById("resenas-empty");
   lista.innerHTML = '<p style="color:#64748b;font-size:13px">Cargando rese\u00F1as...</p>';
 
-  const res    = await fetch(`${API_URL}/resenas/videojuego/${videojuegoId}`);
+  let res;
+  try {
+    res = await request(`${API_URL}/resenas/videojuego/${videojuegoId}`);
+  } catch (e) {
+    lista.innerHTML = `<p style="color:#f87171;font-size:13px">No se pudieron cargar las rese\u00F1as: ${e.message}</p>`;
+    return;
+  }
   const resenas = await res.json();
 
   lista.innerHTML = "";
@@ -421,21 +501,29 @@ async function guardarResena(e) {
     videojuegoId: detalleJuegoId,
   };
 
-  const res = await fetch(`${API_URL}/resenas`, {
-    method: "POST",
-    headers: jsonAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  if (res.ok) {
-    modalResena.style.display = "none";
-    await cargarResenas(detalleJuegoId);
+  try {
+    await request(`${API_URL}/resenas`, {
+      method: "POST",
+      headers: jsonAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+  } catch (err) {
+    notify(`No se pudo guardar la reseña: ${err.message}`, "error");
+    return;
   }
+  modalResena.style.display = "none";
+  notify("Reseña publicada.", "success");
+  await cargarResenas(detalleJuegoId);
 }
 
 async function eliminarResena(id) {
   if (!confirm("\u00BFEliminar esta rese\u00F1a?")) return;
-  await fetch(`${API_URL}/resenas/${id}`, { method: "DELETE", headers: authHeaders() });
+  try {
+    await request(`${API_URL}/resenas/${id}`, { method: "DELETE", headers: authHeaders() });
+  } catch (e) {
+    notify(`No se pudo eliminar la rese\u00F1a: ${e.message}`, "error");
+    return;
+  }
   await cargarResenas(detalleJuegoId);
 }
 
@@ -530,23 +618,26 @@ async function guardarVideojuego(e) {
   const url    = editandoId ? `${API_URL}/videojuegos/${editandoId}` : `${API_URL}/videojuegos`;
   const method = editandoId ? "PUT" : "POST";
 
-  const res = await fetch(url, {
-    method,
-    headers: jsonAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-
   const msg = document.getElementById("message");
-  if (res.ok) {
-    msg.style.color = "#4ade80";
-    msg.textContent = editandoId ? "Juego actualizado." : "Juego agregado.";
-    resetForm();
-    await cargarVideojuegos();
-    setTimeout(() => { msg.textContent = ""; }, 3000);
-  } else {
+  const eraEdicion = editandoId !== null;
+
+  try {
+    await request(url, {
+      method,
+      headers: jsonAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+  } catch (err) {
     msg.style.color = "#f87171";
-    msg.textContent = "Error al guardar. Verifica los campos e int\u00E9ntalo de nuevo.";
+    msg.textContent = err.message;
+    return;
   }
+
+  msg.style.color = "#4ade80";
+  msg.textContent = eraEdicion ? "Juego actualizado." : "Juego agregado.";
+  resetForm();
+  await cargarVideojuegos();
+  setTimeout(() => { msg.textContent = ""; }, 3000);
 }
 
 function editar(id) {
@@ -577,7 +668,13 @@ function editar(id) {
 
 async function eliminar(id) {
   if (!confirm("\u00BFEliminar este juego?")) return;
-  await fetch(`${API_URL}/videojuegos/${id}`, { method: "DELETE", headers: authHeaders() });
+  try {
+    await request(`${API_URL}/videojuegos/${id}`, { method: "DELETE", headers: authHeaders() });
+  } catch (e) {
+    notify(`No se pudo eliminar el juego: ${e.message}`, "error");
+    return;
+  }
+  notify("Juego eliminado.", "success");
   await cargarVideojuegos();
 }
 
@@ -618,7 +715,13 @@ function sincronizarPillActiva(estado) {
 // ════════════════════════════════════════════════════════
 
 async function cargarWishlist() {
-  const res = await fetch(`${API_URL}/wishlist`);
+  let res;
+  try {
+    res = await request(`${API_URL}/wishlist`);
+  } catch (e) {
+    notify(`No se pudo cargar la wishlist: ${e.message}`, "error");
+    return;
+  }
   wishlistItems = await res.json();
   renderizarWishlist();
 }
@@ -685,20 +788,29 @@ async function guardarWishlistItem(e) {
     plataforma: platId ? { id: Number(platId) } : null,
   };
 
-  const res = await fetch(`${API_URL}/wishlist`, {
-    method: "POST",
-    headers: jsonAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  if (res.ok) {
-    modalWishlist.style.display = "none";
-    await cargarWishlist();
+  try {
+    await request(`${API_URL}/wishlist`, {
+      method: "POST",
+      headers: jsonAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+  } catch (err) {
+    errorEl.textContent = err.message;
+    notify(`No se pudo agregar a la wishlist: ${err.message}`, "error");
+    return;
   }
+  modalWishlist.style.display = "none";
+  notify("Agregado a la wishlist.", "success");
+  await cargarWishlist();
 }
 
 async function eliminarWishlistItem(id) {
   if (!confirm("\u00BFQuitar este juego de la wishlist?")) return;
-  await fetch(`${API_URL}/wishlist/${id}`, { method: "DELETE", headers: authHeaders() });
+  try {
+    await request(`${API_URL}/wishlist/${id}`, { method: "DELETE", headers: authHeaders() });
+  } catch (e) {
+    notify(`No se pudo quitar de la wishlist: ${e.message}`, "error");
+    return;
+  }
   await cargarWishlist();
 }

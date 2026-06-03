@@ -23,10 +23,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", ex.getStatusCode().value());
-        body.put("error", ex.getReason());
+        Map<String, Object> body = baseBody(ex.getStatusCode().value(), ex.getReason());
         return ResponseEntity.status(ex.getStatusCode()).body(body);
     }
 
@@ -36,10 +33,7 @@ public class GlobalExceptionHandler {
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
             errores.put(fe.getField(), fe.getDefaultMessage());
         }
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Datos de entrada inválidos");
+        Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST.value(), "Datos de entrada inválidos");
         body.put("errores", errores);
         return ResponseEntity.badRequest().body(body);
     }
@@ -51,29 +45,28 @@ public class GlobalExceptionHandler {
             String valores = Arrays.toString(ex.getRequiredType().getEnumConstants());
             mensaje += ". Valores permitidos: " + valores;
         }
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", mensaje);
-        return ResponseEntity.badRequest().body(body);
+        return ResponseEntity.badRequest().body(baseBody(HttpStatus.BAD_REQUEST.value(), mensaje));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNoResource(NoResourceFoundException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", "Recurso no encontrado");
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(baseBody(HttpStatus.NOT_FOUND.value(), "Recurso no encontrado"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
         log.error("Unhandled exception: {}", ex.getMessage(), ex);
+        return ResponseEntity.internalServerError()
+                .body(baseBody(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error interno del servidor"));
+    }
+
+    // Estructura común de las respuestas de error: timestamp + status + error.
+    private Map<String, Object> baseBody(int status, String error) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("error", "Error interno del servidor");
-        return ResponseEntity.internalServerError().body(body);
+        body.put("status", status);
+        body.put("error", error);
+        return body;
     }
 }

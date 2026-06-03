@@ -263,6 +263,21 @@ Esto levantará el servidor en: http://localhost:8080
 
 Abrir el archivo `frontend/index.html` en cualquier navegador.
 
+### 5. Ejecutar las pruebas
+
+El backend incluye pruebas automatizadas que corren sobre una base de datos H2 en memoria (no requieren PostgreSQL):
+
+```bash
+cd backend
+./mvnw test        # en Windows: mvnw.cmd test
+```
+
+Cobertura actual:
+- **Tests de repositorio** (`@DataJpaTest`): validan las consultas `buscarConFiltros` de videojuegos y wishlist sobre H2.
+- **Tests de controlador** (`@WebMvcTest`): validan códigos de estado, validación de entrada, estadísticas y la autenticación por API Key (`401` sin clave, `201` con clave).
+
+> Requiere **Java 21**. El build de la imagen Docker no compila ni ejecuta los tests (`-Dmaven.test.skip=true`): el artefacto de producción se mantiene desacoplado del código de pruebas.
+
 ---
 
 ## Lecciones Aprendidas
@@ -513,6 +528,6 @@ El proyecto demuestra la implementación de una arquitectura moderna basada en s
 ### 13. Trabajo Futuro
 
 * Implementar autenticación con JWT
-* Añadir pruebas unitarias
+* Ampliar la cobertura de pruebas (ya hay tests de repositorio y de controlador; faltan reseñas, categorías y plataformas)
 * Optimizar consultas con caché
 * Mejorar interfaz de usuario

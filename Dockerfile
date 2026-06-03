@@ -20,8 +20,10 @@ COPY backend/src ./src
 # Spring Boot lo servirá en / por convención de classpath:/static/
 COPY frontend/ ./src/main/resources/static/
 
-# Compilar el JAR (sin tests — se ejecutan en CI separado)
-RUN mvn clean package -DskipTests
+# Compilar el JAR sin compilar ni ejecutar los tests.
+# La imagen de producción no debe depender del código de pruebas;
+# los tests se ejecutan aparte con `mvn test` (ver README / CI).
+RUN mvn clean package -Dmaven.test.skip=true
 
 # ── Etapa 2: Imagen de runtime liviana ───────────────────────
 FROM eclipse-temurin:21-jre-alpine

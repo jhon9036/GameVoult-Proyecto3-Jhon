@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,10 +39,15 @@ public class VideojuegoController {
     @GetMapping("/estadisticas")
     public Map<String, Long> estadisticas() {
         List<Videojuego> todos = repo.findAll();
-        Map<String, Long> conteo = new java.util.LinkedHashMap<>();
+
+        Map<String, Long> conteo = new LinkedHashMap<>();
         for (EstadoJuego estado : EstadoJuego.values()) {
-            long count = todos.stream().filter(v -> v.getEstado() == estado).count();
-            conteo.put(estado.name(), count);
+            conteo.put(estado.name(), 0L);
+        }
+        for (Videojuego videojuego : todos) {
+            if (videojuego.getEstado() != null) {
+                conteo.merge(videojuego.getEstado().name(), 1L, Long::sum);
+            }
         }
         conteo.put("TOTAL", (long) todos.size());
         return conteo;
@@ -125,18 +131,15 @@ public class VideojuegoController {
         return ResponseEntity.noContent().build();
     }
 
+    // Delega el filtrado a una única consulta JPQL (VideojuegoRepository.buscarConFiltros)
+    // en lugar de traer toda la tabla y filtrar en memoria.
     private List<Videojuego> filtrarVideojuegos(
             String titulo,
             EstadoJuego estado,
             Long categoriaId,
             Long plataformaId) {
 
-        return repo.findAll().stream()
-                .filter(v -> titulo == null || v.getTitulo().toLowerCase().contains(titulo.toLowerCase()))
-                .filter(v -> estado == null || v.getEstado() == estado)
-                .filter(v -> categoriaId == null || (v.getCategoria() != null && v.getCategoria().getId().equals(categoriaId)))
-                .filter(v -> plataformaId == null || (v.getPlataforma() != null && v.getPlataforma().getId().equals(plataformaId)))
-                .collect(java.util.stream.Collectors.toList());
+        return repo.buscarConFiltros(titulo, estado, categoriaId, plataformaId);
     }
 
     private String csvValue(Object value) {
