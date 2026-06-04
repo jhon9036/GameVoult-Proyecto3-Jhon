@@ -89,8 +89,8 @@ Evidencias: [#16 HU-13](https://github.com/blinaresv/GameVoult/issues/16) · [#1
 | **Bugs encontrados** | 1 (HU-17 — Swagger HTTPS, resuelto en Sprint 3) |
 | **PRs mergeados** | 24 |
 | **Commits totales** | 86 (2 autores) |
-| **Tiempo promedio de resolución** | ~2 horas por historia (mediana: 1h 58min) |
-| **Cycle Time mínimo** | 11 minutos (HU-03 Plataformas) |
+| **Tiempo promedio de resolución** | 2 horas por historia (mediana: 1h 58min) |
+| **Cycle Time mínimo** | 10 minutos (HU-03 Plataformas) |
 | **Cycle Time máximo** | 27h 18min (HU-16 Documentación) |
 
 
@@ -102,9 +102,9 @@ Lead Time mide el tiempo total desde que una historia entra al backlog hasta que
 
 | Sprint | Lead Time promedio |
 |--------|--------------------|
-| Sprint 1 | ~1h 04min |
-| Sprint 2 | ~2h 10min |
-| Sprint 3 | ~7h 41min |
+| Sprint 1 | 1h 04min |
+| Sprint 2 | 2h 10min |
+| Sprint 3 | 7h 41min |
 | **Global** | **~3h 26min** |
 
 > En este proyecto el Lead Time coincide con el Cycle Time porque los issues se crearon y se trabajaron en la misma sesión de trabajo (backlog → in progress → done el mismo día). No hubo tiempo de espera en cola entre la creación del issue y el inicio del desarrollo.
