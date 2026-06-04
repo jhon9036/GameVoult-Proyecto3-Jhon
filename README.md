@@ -134,12 +134,12 @@ Para los Sprints 1–3 se calcula como la diferencia entre `createdAt` y `closed
 | HU-17 Swagger HTTPS (bug) | 3h 51min |
 | HU-18 Wishlist API | 3h 25min |
 | HU-19 Rediseño frontend | 0h 21min |
-| HU-20 Monitoreo Prometheus + Grafana | ~2h 30min (est.) |
-| HU-21 Métricas de la API | ~1h 45min (est.) |
-| HU-22 Autenticación de usuarios | ~3h 00min (est.) |
-| HU-23 Aislamiento de datos por usuario | ~2h 45min (est.) |
-| HU-24 Exportación CSV | ~1h 10min (est.) |
-| HU-25 Documento de seguridad | ~1h 30min (est.) |
+| HU-20 Monitoreo Prometheus + Grafana | 2h 30min (est.) |
+| HU-21 Métricas de la API | 1h 45min (est.) |
+| HU-22 Autenticación de usuarios | 3h 00min (est.) |
+| HU-23 Aislamiento de datos por usuario | 2h 45min (est.) |
+| HU-24 Exportación CSV | 1h 10min (est.) |
+| HU-25 Documento de seguridad | 1h 30min (est.) |
 | **Promedio (Sprints 1–3, medido)** | **3h 26min** |
 | **Mediana (Sprints 1–3, medido)** | **1h 58min** |
 
