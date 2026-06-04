@@ -4,6 +4,7 @@ import com.gamelist.model.Resena;
 import com.gamelist.model.Videojuego;
 import com.gamelist.repository.ResenaRepository;
 import com.gamelist.repository.VideojuegoRepository;
+import com.gamelist.security.ApiKeyAuthFilter;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +26,11 @@ public class ResenaController {
     }
 
     @GetMapping("/videojuego/{videojuegoId}")
-    public List<Resena> listarPorVideojuego(@PathVariable Long videojuegoId) {
-        if (!videojuegoRepo.existsById(videojuegoId)) {
+    public List<Resena> listarPorVideojuego(
+            @RequestAttribute(ApiKeyAuthFilter.USER_ATTRIBUTE) String username,
+            @PathVariable Long videojuegoId) {
+        // Solo se devuelven reseñas de un videojuego que pertenece al usuario.
+        if (!videojuegoRepo.existsByIdAndUsuarioUsername(videojuegoId, username)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Videojuego con id " + videojuegoId + " no encontrado");
         }
@@ -34,8 +38,10 @@ public class ResenaController {
     }
 
     @PostMapping
-    public ResponseEntity<Resena> crear(@Valid @RequestBody ResenaRequest request) {
-        Videojuego videojuego = videojuegoRepo.findById(request.videojuegoId())
+    public ResponseEntity<Resena> crear(
+            @RequestAttribute(ApiKeyAuthFilter.USER_ATTRIBUTE) String username,
+            @Valid @RequestBody ResenaRequest request) {
+        Videojuego videojuego = videojuegoRepo.findByIdAndUsuarioUsername(request.videojuegoId(), username)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Videojuego con id " + request.videojuegoId() + " no encontrado"));
 
@@ -49,12 +55,13 @@ public class ResenaController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        if (!resenaRepo.existsById(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Reseña con id " + id + " no encontrada");
-        }
-        resenaRepo.deleteById(id);
+    public ResponseEntity<Void> eliminar(
+            @RequestAttribute(ApiKeyAuthFilter.USER_ATTRIBUTE) String username,
+            @PathVariable Long id) {
+        Resena resena = resenaRepo.findByIdAndVideojuegoUsuarioUsername(id, username)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Reseña con id " + id + " no encontrada"));
+        resenaRepo.delete(resena);
         return ResponseEntity.noContent().build();
     }
 

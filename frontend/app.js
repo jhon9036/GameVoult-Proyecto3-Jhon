@@ -75,7 +75,16 @@ async function request(url, options = {}) {
 
   if (!res.ok) {
     if (res.status === 401) {
-      throw new Error("No autorizado. Inicia sesion con tu usuario.");
+      // Token ausente, expirado o invalido: la sesion ya no sirve. Salvo en el
+      // propio endpoint de login (donde 401 = credenciales incorrectas), se limpia
+      // la sesion y se devuelve al usuario a la pantalla de acceso en vez de
+      // dejar la vista atascada con el error.
+      if (!url.includes("/auth/")) {
+        localStorage.removeItem(ADMIN_SESSION_KEY);
+        if (typeof mostrarLogin === "function") mostrarLogin();
+        throw new Error("Tu sesion expiro o no es valida. Inicia sesion de nuevo.");
+      }
+      throw new Error("Usuario o contrasena incorrectos.");
     }
     let mensaje = `Error ${res.status} al procesar la solicitud.`;
     try {
@@ -602,7 +611,7 @@ async function cargarPlataformas() {
 async function cargarVideojuegos() {
   let res;
   try {
-    res = await request(`${API_URL}/videojuegos`);
+    res = await request(`${API_URL}/videojuegos`, { headers: authHeaders() });
   } catch (e) {
     gamesList.innerHTML = `<p style="color:#f87171;padding:20px;text-align:center">
       ${e.message} Intenta recargar la página.</p>`;
@@ -616,7 +625,7 @@ async function cargarVideojuegos() {
 async function cargarEstadisticas() {
   let res;
   try {
-    res = await request(`${API_URL}/videojuegos/estadisticas`);
+    res = await request(`${API_URL}/videojuegos/estadisticas`, { headers: authHeaders() });
   } catch (_) {
     return; // las estadísticas son secundarias: si fallan, no interrumpimos la vista
   }
@@ -629,7 +638,7 @@ async function cargarEstadisticas() {
   });
 }
 
-function exportarCsv() {
+async function exportarCsv() {
   const params = new URLSearchParams();
   const titulo = searchInput.value.trim();
 
@@ -638,7 +647,23 @@ function exportarCsv() {
   if (filterCat.value) params.set("categoriaId", filterCat.value);
 
   const query = params.toString();
-  window.location.href = `${API_URL}/videojuegos/export/csv${query ? `?${query}` : ""}`;
+  const url = `${API_URL}/videojuegos/export/csv${query ? `?${query}` : ""}`;
+
+  // El endpoint requiere sesión de usuario, así que se descarga vía fetch con el token.
+  // Una navegación con window.location no puede enviar la cabecera Authorization.
+  try {
+    const res = await request(url, { headers: authHeaders() });
+    const blob = await res.blob();
+    const enlace = document.createElement("a");
+    enlace.href = URL.createObjectURL(blob);
+    enlace.download = "videojuegos.csv";
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    URL.revokeObjectURL(enlace.href);
+  } catch (e) {
+    notify(`No se pudo exportar el CSV: ${e.message}`, "error");
+  }
 }
 
 // ════════════════════════════════════════════════════════
@@ -773,7 +798,7 @@ async function cargarResenas(videojuegoId) {
 
   let res;
   try {
-    res = await request(`${API_URL}/resenas/videojuego/${videojuegoId}`);
+    res = await request(`${API_URL}/resenas/videojuego/${videojuegoId}`, { headers: authHeaders() });
   } catch (e) {
     lista.innerHTML = `<p style="color:#f87171;font-size:13px">No se pudieron cargar las rese\u00F1as: ${e.message}</p>`;
     return;
@@ -1032,7 +1057,7 @@ function sincronizarPillActiva(estado) {
 async function cargarWishlist() {
   let res;
   try {
-    res = await request(`${API_URL}/wishlist`);
+    res = await request(`${API_URL}/wishlist`, { headers: authHeaders() });
   } catch (e) {
     notify(`No se pudo cargar la wishlist: ${e.message}`, "error");
     return;

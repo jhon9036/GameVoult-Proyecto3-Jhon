@@ -54,3 +54,11 @@ INSERT INTO wishlist (titulo, prioridad, notas, plataforma_id, categoria_id) VAL
 ('Elden Ring',        'ALTA',  'El GOTY que tengo pendiente.', 1, 3),
 ('God of War Ragnarök', 'MEDIA', 'Cuando baje de precio.', 2, 2),
 ('Starfield',         'BAJA',  'Esperar reviews definitivas.', 1, NULL);
+
+-- Los datos de ejemplo se asignan al usuario admin (creado por la app al arrancar).
+-- Sin dueño, no se mostrarían a ningún usuario porque la biblioteca es por-usuario.
+-- Ejecuta este seed DESPUÉS de que la aplicación haya arrancado al menos una vez.
+UPDATE videojuego SET usuario_id = (SELECT id FROM usuario_app WHERE username = 'admin')
+  WHERE usuario_id IS NULL;
+UPDATE wishlist   SET usuario_id = (SELECT id FROM usuario_app WHERE username = 'admin')
+  WHERE usuario_id IS NULL;
