@@ -15,7 +15,7 @@
 
 ## Descripción del Proyecto
 
-**GameVault** es una aplicación web para gestionar tu biblioteca de videojuegos personales, desplegada íntegramente en Google Cloud Platform, permite registrar juegos, organizarlos por categoría y plataforma, llevar un seguimiento por estado (PENDIENTE, JUGANDO, TERMINADO, FAVORITO), escribir reseñas con puntuación y mantener una wishlist priorizada.
+**GameVault** es una aplicación web para gestionar tu biblioteca de videojuegos personales, desplegada íntegramente en Google Cloud Platform, permite registrar juegos, organizarlos por categoría y plataforma, llevar un seguimiento por estado (PENDIENTE, JUGANDO, TERMINADO, FAVORITO), escribir reseñas con puntuación y mantener una wishlist priorizada. **Cada usuario gestiona su propia biblioteca, wishlist, reseñas y estadísticas de forma privada e independiente** del resto de cuentas.
 
 ---
 
@@ -151,6 +151,7 @@ El Proyecto 3 agrega cuatro componentes al sistema existente:
 | Monitoreo | Prometheus + Grafana con Docker Compose |
 | Metricas | Endpoint `/metrics`, contador de requests, latencia y gauge |
 | Autenticacion | Registro/login de usuarios + API Key de respaldo para scripts |
+| Datos por usuario | Cada cuenta ve y gestiona solo su propia biblioteca, wishlist, resenas y estadisticas |
 | Seguridad | Documento [`docs/security.md`](docs/security.md) |
 | Nueva funcionalidad | Exportacion de videojuegos a CSV |
 
@@ -188,7 +189,7 @@ Con el stack corriendo, ejecutar en PowerShell:
 .\scripts\generate-traffic.ps1
 ```
 
-El script consulta endpoints publicos y realiza algunas operaciones temporales en wishlist usando la API Key local.
+El script inicia sesion con un usuario dedicado (lo registra automaticamente si no existe), consulta la biblioteca, las estadisticas y la wishlist con su token, y crea/elimina items temporales de wishlist para generar metricas.
 
 ### Login y registro de usuarios
 
@@ -199,30 +200,45 @@ Usuario: admin
 Contrasena: admin123
 ```
 
-Los usuarios registrados quedan con rol `USER` y el usuario inicial queda con rol `ADMIN`. Las contrasenas se guardan con hash PBKDF2 y el frontend guarda un token firmado temporal para enviarlo en operaciones de escritura con:
+Los usuarios registrados quedan con rol `USER` y el usuario inicial queda con rol `ADMIN`. Las contrasenas se guardan con hash PBKDF2 y el frontend guarda un token firmado temporal que envia en cada peticion a los recursos protegidos con:
 
 ```text
 Authorization: Bearer <token>
 ```
 
-La API Key se conserva como mecanismo de respaldo para scripts y pruebas tecnicas. Los endpoints de lectura son publicos. Los endpoints de creacion, actualizacion y eliminacion aceptan token de usuario autenticado o:
+### Modelo de autorizacion (datos por usuario)
 
-```text
-X-API-Key: dev-gamevault-key
-```
+Cada cuenta gestiona unicamente sus propios datos. Los videojuegos, la wishlist, las resenas y las estadisticas quedan asociados al usuario que los crea y **solo ese usuario** puede verlos o modificarlos. Si Brandon registra juegos y luego inicia sesion Jhon, cada uno vera su propia biblioteca de forma independiente; ningun usuario puede leer ni alterar los datos de otro (responde `404`).
 
-Ejemplo de llamada protegida:
+| Tipo de endpoint | Lectura | Escritura |
+|------------------|---------|-----------|
+| Recursos por usuario — `/api/videojuegos`, `/api/wishlist`, `/api/resenas` (incluye `export/csv` y `estadisticas`) | Requiere sesion de usuario (token Bearer) | Requiere sesion de usuario (token Bearer) |
+| Recursos compartidos — `/api/categorias`, `/api/plataformas` | Publica | Token de usuario o `X-API-Key` |
+
+La API Key (`X-API-Key: dev-gamevault-key`) se conserva como respaldo **unicamente** para las escrituras de los recursos compartidos (categorias y plataformas) y para scripts tecnicos; **no da acceso a los datos por usuario**.
+
+Ejemplo de escritura en un recurso compartido con API Key:
 
 ```powershell
 Invoke-RestMethod -Method Post `
-  -Uri "http://localhost:8080/api/wishlist" `
+  -Uri "http://localhost:8080/api/categorias" `
   -Headers @{ "X-API-Key" = "dev-gamevault-key"; "Content-Type" = "application/json" } `
-  -Body '{"titulo":"Demo auth","prioridad":"MEDIA","notas":"Prueba protegida"}'
+  -Body '{"nombre":"Indie"}'
 ```
 
-Para demostrar el bloqueo, se puede repetir la misma llamada sin `X-API-Key` y la API respondera `401`.
+Ejemplo de acceso a un recurso por usuario con token Bearer:
 
-Si se cambia `API_KEY` en Docker Compose o Cloud Run, el frontend puede usar la nueva clave guardandola en el navegador:
+```powershell
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:8080/api/auth/login" `
+  -ContentType "application/json" -Body '{"username":"admin","password":"admin123"}'
+
+Invoke-RestMethod -Method Get -Uri "http://localhost:8080/api/videojuegos" `
+  -Headers @{ "Authorization" = "Bearer $($login.token)" }
+```
+
+Cualquier peticion a un recurso por usuario sin token valido responde `401`.
+
+Si se cambia `API_KEY` en Docker Compose o Cloud Run, el frontend puede usar la nueva clave guardandola en el navegador (solo afecta a los recursos compartidos):
 
 ```javascript
 localStorage.setItem("gamevaultApiKey", "nueva-clave")
@@ -230,13 +246,14 @@ localStorage.setItem("gamevaultApiKey", "nueva-clave")
 
 ### Exportacion CSV
 
-La biblioteca incluye un boton **Exportar CSV**. Tambien se puede llamar directamente:
+La biblioteca incluye un boton **Exportar CSV** que descarga unicamente los videojuegos del usuario en sesion. El endpoint requiere token Bearer:
 
 ```text
 GET http://localhost:8080/api/videojuegos/export/csv
+Authorization: Bearer <token>
 ```
 
-El endpoint acepta filtros opcionales como `titulo`, `estado`, `categoriaId` y `plataformaId`.
+Acepta filtros opcionales como `titulo`, `estado`, `categoriaId` y `plataformaId`.
 
 ---
 
@@ -280,8 +297,8 @@ cd backend
 ```
 
 Cobertura actual:
-- **Tests de repositorio** (`@DataJpaTest`): validan las consultas `buscarConFiltros` de videojuegos y wishlist sobre H2.
-- **Tests de controlador** (`@WebMvcTest`): validan códigos de estado, validación de entrada, estadísticas y la autenticación por API Key (`401` sin clave, `201` con clave).
+- **Tests de repositorio** (`@DataJpaTest`): validan las consultas `buscarConFiltros` de videojuegos y wishlist sobre H2, incluyendo el **filtrado por usuario dueño** (un usuario no ve los datos de otro).
+- **Tests de controlador** (`@WebMvcTest`): validan códigos de estado, validación de entrada, estadísticas y la **autorización por sesión de usuario** (`401` sin token, `201` con token; cada operación queda acotada al usuario autenticado).
 
 > Requiere **Java 21**. El build de la imagen Docker no compila ni ejecuta los tests (`-Dmaven.test.skip=true`): el artefacto de producción se mantiene desacoplado del código de pruebas.
 
@@ -534,7 +551,7 @@ El proyecto demuestra la implementación de una arquitectura moderna basada en s
 
 ### 13. Trabajo Futuro
 
-* Implementar autenticación con JWT
+* Migrar el token firmado HMAC actual a JWT estándar con refresh tokens
 * Ampliar la cobertura de pruebas (ya hay tests de repositorio y de controlador; faltan reseñas, categorías y plataformas)
 * Optimizar consultas con caché
 * Mejorar interfaz de usuario

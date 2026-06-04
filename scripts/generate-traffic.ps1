@@ -1,24 +1,38 @@
 param(
     [string]$BaseUrl = "http://localhost:8080",
-    [string]$ApiKey = "dev-gamevault-key",
+    [string]$Username = "traffic-bot",
+    [string]$Password = "traffic123",
     [int]$Iterations = 30
 )
 
-$jsonHeaders = @{
-    "Content-Type" = "application/json"
-    "X-API-Key" = $ApiKey
+# Los recursos por-usuario (videojuegos, wishlist, resenas) requieren sesion.
+# Se inicia sesion con un usuario dedicado y, si no existe todavia, se registra.
+function Get-AuthToken {
+    $body = @{ username = $Username; password = $Password } | ConvertTo-Json
+    try {
+        $resp = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/auth/login" -ContentType "application/json" -Body $body
+        return $resp.token
+    } catch {
+        $resp = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/auth/register" -ContentType "application/json" -Body $body
+        return $resp.token
+    }
 }
 
+$token = Get-AuthToken
+$jsonHeaders = @{
+    "Content-Type"  = "application/json"
+    "Authorization" = "Bearer $token"
+}
 $authHeaders = @{
-    "X-API-Key" = $ApiKey
+    "Authorization" = "Bearer $token"
 }
 
 for ($i = 1; $i -le $Iterations; $i++) {
     Write-Host "Traffic iteration $i/$Iterations"
 
-    Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/videojuegos" | Out-Null
-    Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/videojuegos/estadisticas" | Out-Null
-    Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/wishlist" | Out-Null
+    Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/videojuegos" -Headers $authHeaders | Out-Null
+    Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/videojuegos/estadisticas" -Headers $authHeaders | Out-Null
+    Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/wishlist" -Headers $authHeaders | Out-Null
 
     if ($i % 5 -eq 0) {
         $body = @{
