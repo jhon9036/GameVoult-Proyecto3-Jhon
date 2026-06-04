@@ -85,7 +85,7 @@ Evidencias: [#16 HU-13](https://github.com/blinaresv/GameVoult/issues/16) · [#1
 | Métrica | Valor |
 |---------|-------|
 | **Velocity promedio** | 21 puntos por sprint |
-| **Historias completadas** | 19 / 19 |
+| **Historias completadas** | 25 / 25 (19 de los Sprints 1–3 + 6 del Proyecto 3) |
 | **Bugs encontrados** | 1 (HU-17 — Swagger HTTPS, resuelto en Sprint 3) |
 | **PRs mergeados** | 24 |
 | **Commits totales** | 86 (2 autores) |
@@ -111,7 +111,7 @@ Lead Time mide el tiempo total desde que una historia entra al backlog hasta que
 
 ### Cycle Time por Historia
 
-Calculado como diferencia entre `createdAt` y `closedAt` de cada issue en GitHub.
+Calculado como diferencia entre `createdAt` y `closedAt` de cada issue en GitHub. La tabla corresponde a las 19 historias de los Sprints 1–3; las 6 historias del Proyecto 3 (HU-20 a HU-25) se entregaron en una fase posterior y no se incluyen en este desglose de tiempos.
 
 | Historia | Cycle Time |
 |----------|-----------|
