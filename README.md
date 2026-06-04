@@ -144,7 +144,7 @@ Calculado como diferencia entre `createdAt` y `closedAt` de cada issue en GitHub
 
 ## Proyecto 3 - Seguridad, monitoreo y nueva funcionalidad
 
-El Proyecto 3 agrega cuatro componentes al sistema existente:
+El Proyecto 3 agrega los siguientes componentes al sistema existente:
 
 | Componente | Implementacion |
 |------------|----------------|
@@ -154,6 +154,30 @@ El Proyecto 3 agrega cuatro componentes al sistema existente:
 | Datos por usuario | Cada cuenta ve y gestiona solo su propia biblioteca, wishlist, resenas y estadisticas |
 | Seguridad | Documento [`docs/security.md`](docs/security.md) |
 | Nueva funcionalidad | Exportacion de videojuegos a CSV |
+
+### Historias de usuario — Proyecto 3
+
+| Historia | Descripción | Estado |
+|----------|-------------|--------|
+| HU-20 | Monitoreo con Prometheus + Grafana sobre Docker Compose | Completado |
+| HU-21 | Métricas de la API: contador de requests, latencia (percentiles p95/p99) y gauge | Completado |
+| HU-22 | Autenticación de usuarios: registro/login con hash PBKDF2 y token firmado | Completado |
+| HU-23 | Aislamiento de datos por usuario: cada cuenta gestiona su propia biblioteca, wishlist, reseñas y estadísticas, sin poder acceder a las de otros | Completado |
+| HU-24 | Exportación de la biblioteca del usuario a CSV (con filtros) | Completado |
+| HU-25 | Documento de seguridad del sistema (`docs/security.md`) | Completado |
+
+> Seguimiento en el [GitHub Project (Kanban)](https://github.com/blinaresv/GameVoult/projects).
+
+#### HU-23 — Aislamiento de datos por usuario (detalle)
+
+**Como** usuario registrado, **quiero** que mis videojuegos, wishlist, reseñas y estadísticas sean privados, **para que** ningún otro usuario vea ni modifique mi información.
+
+Criterios de aceptación:
+- Cada videojuego y cada item de wishlist queda asociado al usuario que lo crea (`usuario_id`).
+- Las consultas de biblioteca, wishlist, reseñas, estadísticas y exportación CSV devuelven únicamente los datos del usuario autenticado.
+- Un usuario no puede leer, editar ni eliminar recursos de otro (responde `404`).
+- Los endpoints por usuario requieren token de sesión válido; sin él responden `401`.
+- Cubierto por tests de repositorio (`@DataJpaTest`) y de controlador (`@WebMvcTest`).
 
 ### Ejecucion del stack completo
 
