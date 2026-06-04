@@ -75,7 +75,16 @@ async function request(url, options = {}) {
 
   if (!res.ok) {
     if (res.status === 401) {
-      throw new Error("No autorizado. Inicia sesion con tu usuario.");
+      // Token ausente, expirado o invalido: la sesion ya no sirve. Salvo en el
+      // propio endpoint de login (donde 401 = credenciales incorrectas), se limpia
+      // la sesion y se devuelve al usuario a la pantalla de acceso en vez de
+      // dejar la vista atascada con el error.
+      if (!url.includes("/auth/")) {
+        localStorage.removeItem(ADMIN_SESSION_KEY);
+        if (typeof mostrarLogin === "function") mostrarLogin();
+        throw new Error("Tu sesion expiro o no es valida. Inicia sesion de nuevo.");
+      }
+      throw new Error("Usuario o contrasena incorrectos.");
     }
     let mensaje = `Error ${res.status} al procesar la solicitud.`;
     try {
